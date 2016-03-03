@@ -1,0 +1,89 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/aws/aws-sdk-go",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "1e97c3d4434349a4d680dd2cd99adc2cbc694349",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/davecgh/go-spew/spew",
+			"repository": "https://github.com/davecgh/go-spew",
+			"revision": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d",
+			"branch": "master",
+			"path": "/spew"
+		},
+		{
+			"importpath": "github.com/go-ini/ini",
+			"repository": "https://github.com/go-ini/ini",
+			"revision": "776aa739ce9373377cd16f526cdf06cb4c89b40f",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/jmespath/go-jmespath",
+			"repository": "https://github.com/jmespath/go-jmespath",
+			"revision": "0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/justinas/alice",
+			"repository": "https://github.com/justinas/alice",
+			"revision": "29a850317649fc021f42f80ec29552f9a3156ee9",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/lsegal/gucumber",
+			"repository": "https://github.com/lsegal/gucumber",
+			"revision": "44a4d7eb3b14a88cf82b073dfb7e06277afdc549",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/pmezard/go-difflib/difflib",
+			"repository": "https://github.com/pmezard/go-difflib",
+			"revision": "792786c7400a136282c1664665ae0a8db921c6c2",
+			"branch": "master",
+			"path": "/difflib"
+		},
+		{
+			"importpath": "github.com/shiena/ansicolor",
+			"repository": "https://github.com/shiena/ansicolor",
+			"revision": "a422bbe96644373c5753384a59d678f7d261ff10",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/stretchr/testify/assert",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "1f4a1643a57e798696635ea4c126e9127adb7d3c",
+			"branch": "master",
+			"path": "/assert"
+		},
+		{
+			"importpath": "github.com/vmogilev/dlog",
+			"repository": "https://github.com/vmogilev/dlog",
+			"revision": "8c76f0e2d06a2321e6285312ca6281025998f5e6",
+			"branch": "master"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/ast/astutil",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "2f1d035a8abfa2a0ecdc5ad63a17625468d900c2",
+			"branch": "master",
+			"path": "/go/ast/astutil"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/buildutil",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "2f1d035a8abfa2a0ecdc5ad63a17625468d900c2",
+			"branch": "master",
+			"path": "/go/buildutil"
+		},
+		{
+			"importpath": "golang.org/x/tools/go/loader",
+			"repository": "https://go.googlesource.com/tools",
+			"revision": "2f1d035a8abfa2a0ecdc5ad63a17625468d900c2",
+			"branch": "master",
+			"path": "/go/loader"
+		}
+	]
+}

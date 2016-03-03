@@ -1,67 +1,77 @@
 package main
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
 	"github.com/vmogilev/dlog"
 )
 
-type AppConfig struct {
-	AppRoot  string
-	HttpFQDN string
+type appContext struct {
+	bucket  string
+	cred    string
+	region  string
+	cdn     string
+	host    string
+	keyID   string
+	privKey *rsa.PrivateKey
 }
 
-var app AppConfig
+var c appContext
 
 var (
-	bucket    = flag.String("bucket", "support-pub-dev", "aws bucket name")
-	awscred   = flag.String("awsCred", "ale-s3app", "aws credentials profile from ~/.aws/credentials")
-	awsregion = flag.String("awsRegion", "us-east-1", "aws region")
-
-	rootDir = flag.String("rootDir", "./", "Root Directory [where the ./conf, ./static, ./templates and ./img dirs are]")
-
-	httpHost    = flag.String("httpHost", "http://localhost", "HTTP Host Name")
-	httpPort    = flag.String("httpPort", "8080", "HTTP Port")
-	httpMount   = flag.String("httpMount", "/uploads", "HTTP Mount Point")
-	dlPrefix    = flag.String("dlPrefix", "/release", "files under this URL path will be handed off to CloundFront CDN")
-	httpHostExt = flag.String("httpHostExt", "", "Fully Qualified External Path if using Proxy [EX: http://mydomain.com/path]")
-
-	debug = flag.Bool("debug", false, "Debug")
+	awsBucket = flag.String("awsBucket", "support-pub-dev", "aws bucket name")
+	awsCred   = flag.String("awsCred", "ale-s3app", "aws credentials profile from ~/.aws/credentials")
+	awsRegion = flag.String("awsRegion", "us-east-1", "aws region")
+	cdnPath   = flag.String("cdnPath", "/cdn/", "URL path prefix to pass to CDN")
+	cdnHost   = flag.String("cdnHost", "http://cdn-dev.alcalcs.com/", "CloudFront CDN Hostname and http|https prefix")
+	cfKeyID   = flag.String("cfKeyID", "", "CloudFront Signer Key ID")
+	cfKeyFile = flag.String("cfKeyFile", "", "CloudFront Signer Key File Location")
+	httpPort  = flag.String("httpPort", "8080", "HTTP Port")
+	debug     = flag.Bool("debug", false, "Debug")
 )
+
+func loadKey(f string) *rsa.PrivateKey {
+	data, err := ioutil.ReadFile(f)
+	if err != nil {
+		dlog.Error.Panicf("Failed to read from %s: %s", f, err)
+	}
+	k, err := x509.ParsePKCS1PrivateKey(data)
+	if err != nil {
+		dlog.Error.Panicf("Failed to parse key %s: %s", f, err)
+	}
+	return k
+}
 
 func main() {
 	flag.Parse()
 
 	// setup log output streams
+	// Trace, Info, Warning, Error
 	if *debug {
 		dlog.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 	} else {
 		dlog.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	}
 
-	var fqdn string
-	if httpHostExt != "" {
-		fqdn = httpHostExt
-	} else {
-		mp := MountPoint(httpMount)
-		if httpPort == "80" {
-			fqdn = httpHost + mp
-		} else {
-			fqdn = httpHost + ":" + httpPort + mp
-		}
+	c = appContext{
+		bucket:  *awsBucket,
+		cred:    *awsCred,
+		region:  *awsRegion,
+		cdn:     *cdnPath,
+		host:    *cdnHost,
+		keyID:   *cfKeyID,
+		privKey: loadKey(*cfKeyFile),
 	}
 
-	app = AppConfig{
-		AppRoot:  *rootDir,
-		HttpFQDN: fqdn,
-	}
-
-	router := NewRouter(httpMount, rootDir, filepath.Join(*rootDir, "img"))
-	dlog.Info.Fatal(http.ListenAndServe(":"+httpPort, router))
+	middleware := alice.New(logging, recovery)
+	http.Handle(*cdnPath, middleware.ThenFunc(c.cdnHandler))
+	http.Handle("/", middleware.ThenFunc(c.dispatchHandler))
+	dlog.Info.Fatal(http.ListenAndServe(":"+*httpPort, nil))
 
 }
