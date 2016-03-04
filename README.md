@@ -27,3 +27,5 @@ Signs AWS CloundFront URLs to serve files from S3
             HTTP Port (default "8080")
       -rootToken string
             With this token any download is allowed (default "gTxHrJ")
+
+REV: # Thu: March 3 2016
