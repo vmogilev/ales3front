@@ -6,9 +6,6 @@ if [ $1"x" != "YESx" ]; then
     exit
 fi
 
-echo "PASS"
-exit
-
 # ----------- EDIT BEGIN ----------- #
 
 BASE_TOP=/data; export BASE_TOP
