@@ -21,5 +21,5 @@ nohup $GOPATH/bin/${APP} \
            -htmlPath=${htmlPath} \
            -debug=${debug} \
            -httpPort=${httpPort} \
-           -rootToken=${rootToken} >> ${DOPROOT}/server.log 2>&1 </dev/null &
+           -rootToken=${rootToken} >> ${LOG}/server.log 2>&1 </dev/null &
 
