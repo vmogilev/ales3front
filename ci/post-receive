@@ -1,0 +1,10 @@
+#!/bin/bash
+GOPATH=/data/dev/golang; export GOPATH
+GIT_DIR=/data/stage/git/alesi2/ales3front.git; export GIT_DIR
+SOURCE=${GOPATH}/src/bitbucket.org/alesi2/ales3front; export SOURCE
+
+## pre-creating SOURCE DIR solves the issue with:
+##  "remote: fatal: This operation must be run in a work tree"
+mkdir -p ${SOURCE}
+GIT_WORK_TREE=${SOURCE} git checkout -f
+${GOPATH}/src/bitbucket.org/alesi2/ales3front/ci/deploy.sh YES

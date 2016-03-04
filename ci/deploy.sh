@@ -2,6 +2,7 @@
 
 if [ $1"x" != "YESx" ]; then
     echo "this script is designed to run from hooks/post-receive in staging bare git repo"
+    echo "by placing post-receive in hooks/post-receive"
     echo "see: http://www.dbatoolz.com/t/continuous-integration-golang-github.html"
     exit
 fi
@@ -39,7 +40,7 @@ GIT_DIR=${BASE_TOP}/stage/git/${SRC_NAME}/${APP_NAME}.git; export GIT_DIR
 mkdir -p ${SOURCE}
 mkdir -p ${TARGET}
 
-GIT_WORK_TREE=${SOURCE} git checkout -f
+## GIT_WORK_TREE=${SOURCE} git checkout -f
 
 
 ## do not prefix go get with GIT_WORK_TREE - it causes the following errors:
