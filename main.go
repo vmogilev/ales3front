@@ -22,6 +22,9 @@ type appContext struct {
 	keyID    string
 	privKey  *rsa.PrivateKey
 	expHours int
+	htmlPath string
+	debug    bool
+	root     string
 }
 
 var c appContext
@@ -30,6 +33,7 @@ var (
 	awsBucket  = flag.String("awsBucket", "support-pub-dev", "aws bucket name")
 	awsCred    = flag.String("awsCred", "ale-s3app", "aws credentials profile from ~/.aws/credentials")
 	awsRegion  = flag.String("awsRegion", "us-east-1", "aws region")
+	htmlPath   = flag.String("htmlPath", "./html", "absolute or relative path to html templates")
 	cdnPath    = flag.String("cdnPath", "/cdn/", "URL path prefix to pass to CDN")
 	cdnHost    = flag.String("cdnHost", "http://cdn-dev.alcalcs.com/", "CloudFront CDN Hostname and http|https prefix")
 	cfKeyID    = flag.String("cfKeyID", "", "CloudFront Signer Key ID")
@@ -37,6 +41,7 @@ var (
 	cfExpHours = flag.Int("cfExpHours", 1, "CloudFront Signed URL Expiration (in hours)")
 	httpPort   = flag.String("httpPort", "8080", "HTTP Port")
 	debug      = flag.Bool("debug", false, "Debug")
+	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download is allowed")
 )
 
 func loadKey(f string) *rsa.PrivateKey {
@@ -84,6 +89,9 @@ func main() {
 		keyID:    *cfKeyID,
 		privKey:  loadKey(*cfKeyFile),
 		expHours: *cfExpHours,
+		htmlPath: *htmlPath,
+		debug:    *debug,
+		root:     *rootToken,
 	}
 
 	middleware := alice.New(logging, recovery)
