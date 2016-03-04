@@ -73,7 +73,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := &Page{
-		Title:     c.cdn,
+		Title:     "Download",
 		URLPath:   urlpath,
 		RawURL:    rawURL,
 		SignedURL: signedURL,
