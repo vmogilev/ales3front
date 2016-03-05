@@ -6,10 +6,20 @@ import (
 	//"path"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudfront/sign"
+	"github.com/aws/aws-sdk-go/service/s3"
 	//"github.com/nu7hatch/gouuid"
 	"github.com/vmogilev/dlog"
 )
+
+type s3File struct {
+	ContentLength int64
+	ContentType   string
+	LastModified  time.Time
+}
 
 type Page struct {
 	Title     string
@@ -18,6 +28,7 @@ type Page struct {
 	SignedURL string
 	OK        bool
 	Error     string
+	Meta      *s3File
 }
 
 func (c *appContext) validateToken(t string) bool {
@@ -50,6 +61,43 @@ func (c *appContext) signURL(rawURL string) (bool, string, string) {
 	return ok, message, signedURL
 }
 
+func (c *appContext) headS3File(key string) (bool, string, *s3File) {
+	sess := session.New(&aws.Config{
+		Region:      aws.String(c.region),
+		Credentials: credentials.NewSharedCredentials("", c.cred),
+	})
+	svc := s3.New(sess)
+
+	params := &s3.HeadObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	}
+
+	resp, err := svc.HeadObject(params)
+	if err != nil {
+		dlog.Error.Printf("couldn't get head of file: %s, %s", key, err)
+		message := "File is not found!  Please check the URL"
+		if c.debug {
+			message = fmt.Sprintf("File is not found! Error: %s", err)
+		}
+		return false, message, &s3File{}
+	}
+
+	f := &s3File{
+		ContentLength: *resp.ContentLength,
+		ContentType:   *resp.ContentType,
+		LastModified:  *resp.LastModified,
+	}
+
+	if c.debug {
+		dlog.Trace.Println(resp)
+		dlog.Trace.Println(f)
+	}
+
+	return true, "", f
+
+}
+
 func (c *appContext) dispatchHandler(w http.ResponseWriter, r *http.Request) {
 	urlpath := r.URL.Path[0:]
 	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", c.bucket, urlpath)
@@ -66,8 +114,13 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	//rawURL := path.Join(c.host, urlpath) // this strips :// to :/
 	urlpath := r.URL.Path[len(c.cdn):]
 	rawURL := c.host + urlpath
-
 	signedURL := "#"
+	meta := &s3File{}
+
+	if ok {
+		ok, message, meta = c.headS3File(urlpath)
+	}
+
 	if ok {
 		ok, message, signedURL = c.signURL(rawURL)
 	}
@@ -79,6 +132,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		SignedURL: signedURL,
 		OK:        ok,
 		Error:     message,
+		Meta:      meta,
 	}
 	c.renderTemplate(w, "download", p)
 	//fmt.Fprintf(w, "<h1>%s</h1><div>urlpath: %s</div><div>rawURL: %s</div><div>signedURL: %s</div>", c.cdn, urlpath, rawURL, signedURL)

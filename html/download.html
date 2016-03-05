@@ -65,6 +65,7 @@ body {
       <div class="jumbotron">
         <h1>{{.Title}}</h1>
 
+                <!-- <div>SignedURL: {{.SignedURL}}</div> -->
 <table class="table table-bordered">
 <tr>
         <td class="active">Path</td>
@@ -74,9 +75,20 @@ body {
         <td class="active">URL</td>
         <td class="success">{{.RawURL}}</td>
 </tr>
+<tr>
+        <td class="active">Length</td>
+        <td class="success">{{.Meta.ContentLength}}</td>
+</tr>
+<tr>
+        <td class="active">Type</td>
+        <td class="success">{{.Meta.ContentType}}</td>
+</tr>
+<tr>
+        <td class="active">Modified</td>
+        <td class="success">{{.Meta.LastModified}}</td>
+</tr>
 </table>
 
-                <!-- <div>SignedURL: {{.SignedURL}}</div> -->
     {{if .OK}}
         <p>
           <a class="btn btn-primary btn-lg btn-block active" href="{{.SignedURL}}" role="button">Start automatic download &raquo;</a>
