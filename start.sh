@@ -7,13 +7,13 @@ err() {
 
 APP=ales3front
 
-if [ -f "$GOPATH/bin/${APP}" ]; then
-    echo "OK: found $GOPATH/bin/${APP}"
+if [ -f "$TOP/bin/${APP}" ]; then
+    echo "OK: found $TOP/bin/${APP}"
 else
-    err "application binary is missing in $GOBIN/${APP}"
+    err "application binary is missing in $TOP/bin/${APP}"
 fi
 
-nohup $GOPATH/bin/${APP} \
+nohup $TOP/bin/${APP} \
            -cfKeyID=${cfKeyID} \
            -cfKeyFile=${cfKeyFile} \
            -cdnHost=${cdnHost} \
@@ -22,4 +22,3 @@ nohup $GOPATH/bin/${APP} \
            -debug=${debug} \
            -httpPort=${httpPort} \
            -rootToken=${rootToken} >> ${LOG}/server.log 2>&1 </dev/null &
-

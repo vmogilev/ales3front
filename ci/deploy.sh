@@ -70,9 +70,11 @@ cp -pr ${SOURCE}/conf     ${TARGET}/
 cp -p ${SOURCE}/*.sh        ${TARGET}/
 chmod +x ${TARGET}/*.sh
 
+mkdir -p ${TARGET}/bin
+cp -p $GOPATH/bin/${APP_NAME} ${TARGET}/bin/
+
 . ${TARGET}/conf/${APP_NAME}.env
 ${TARGET}/stop.sh >> ${TARGET}/log/stop.log 2>&1 </dev/null
 ${TARGET}/start.sh >> ${TARGET}/log/start.log 2>&1 </dev/null
 
 # ----------- DEPLOY END ----------- #
-
