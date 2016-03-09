@@ -71,7 +71,12 @@ cp -p ${SOURCE}/*.sh        ${TARGET}/
 chmod +x ${TARGET}/*.sh
 
 mkdir -p ${TARGET}/bin
+## this fails with
+## cp: setting attribute ‘security.capability’ for ‘security.capability’: Operation not permitted
+## cp --preserve=all $GOPATH/bin/${APP_NAME} ${TARGET}/bin/
+## so we have to use setcap again
 cp -p $GOPATH/bin/${APP_NAME} ${TARGET}/bin/
+sudo setcap 'cap_net_bind_service=+ep' ${TARGET}/bin/${APP_NAME}
 
 . ${TARGET}/conf/${APP_NAME}.env
 ${TARGET}/stop.sh >> ${TARGET}/log/stop.log 2>&1 </dev/null
