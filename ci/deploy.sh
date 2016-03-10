@@ -53,8 +53,11 @@ mkdir -p ${TARGET}
 unset GOBIN
 unset GIT_DIR
 $GO get ${SRC_PATH}/${APP_NAME}
+##$GO install ${SRC_PATH}/${APP_NAME}
 ##CGO_ENABLED=0 $GO install -ldflags '-s -w' ${SRC_PATH}/${APP_NAME}
-$GO install ${SRC_PATH}/${APP_NAME}
+CGO_ENABLED=0; export CGO_ENABLED
+$GO install -ldflags '-s -w' -a ${SRC_PATH}/${APP_NAME}
+
 
 if [ $? -gt 0 ]; then
     echo "ERROR: compiling ${APP_NAME} - exiting!"

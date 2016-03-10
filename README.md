@@ -28,4 +28,4 @@ Signs AWS CloundFront URLs to serve files from S3
       -rootToken string
             With this token any download is allowed (default "gTxHrJ")
 
-REV:  # Wed: March 9 2016
+REV:  # Wed: March 9 2016 /
