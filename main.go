@@ -41,7 +41,7 @@ var (
 	cfExpHours = flag.Int("cfExpHours", 1, "CloudFront Signed URL Expiration (in hours)")
 	httpPort   = flag.String("httpPort", "8080", "HTTP Port")
 	debug      = flag.Bool("debug", false, "Debug")
-	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download is allowed")
+	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token all downloads are allowed")
 )
 
 func loadKey(f string) *rsa.PrivateKey {
@@ -52,7 +52,7 @@ func loadKey(f string) *rsa.PrivateKey {
 
 	block, _ := pem.Decode(data)
 	if block == nil {
-		dlog.Error.Panicf("No key found in %s: %s", f)
+		dlog.Error.Panicf("No key found in: %s", f)
 	}
 
 	var k *rsa.PrivateKey
