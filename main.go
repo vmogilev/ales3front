@@ -41,7 +41,7 @@ var (
 	cfExpHours = flag.Int("cfExpHours", 1, "CloudFront Signed URL Expiration (in hours)")
 	httpPort   = flag.String("httpPort", "8080", "HTTP Port")
 	debug      = flag.Bool("debug", false, "Debug")
-	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download is allowed")
+	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download allowed")
 )
 
 func loadKey(f string) *rsa.PrivateKey {
