@@ -29,7 +29,7 @@ SRC_NAME=alesi2; export SRC_NAME
 
 # ----------- EDIT END ----------- #
 
-
+GO15VENDOREXPERIMENT=1; export GO15VENDOREXPERIMENT
 GOPATH=${BASE_TOP}/dev/golang; export GOPATH
 SOURCE=${GOPATH}/src/${SRC_PATH}/${APP_NAME}; export SOURCE
 TARGET=${APP_TOP}/${WWW_PATH}; export TARGET
