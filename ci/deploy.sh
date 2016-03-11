@@ -11,7 +11,21 @@ fi
 
 BASE_TOP=/data; export BASE_TOP
 APP_TOP=${BASE_TOP}/app; export APP_TOP
-GO=/usr/local/go/bin/go; export GO
+
+## we need a custom go install to do static linking
+## because CGO_ENABLED=0 GOOS=linux -a
+## will try to rebuild system libs in /usr/local/go
+## and it will fail with:
+##   go install net: open /usr/local/go/pkg/linux_amd64/net.a: permission denied
+##
+## so the solution is to:
+##    sudo rm -rf /usr/local/go
+##    tar -C /data/dev -xzf go1.6.linux-amd64.tar.gz
+##
+##GO=/usr/local/go/bin/go; export GO
+GO=/data/dev/go/bin/go; export GO
+GOROOT=${BASE_TOP}/dev/go; export GOROOT
+PATH=$PATH:$GOROOT/bin; export PATH
 
 ## go [get|install] ${SRC_PATH}/${APP_NAME}
 SRC_PATH=bitbucket.org/alesi2; export SRC_PATH
@@ -50,13 +64,17 @@ mkdir -p ${TARGET}
 ##GIT_WORK_TREE=${SOURCE} $GO get github.com/rigingo/dop
 ##GIT_WORK_TREE=${SOURCE} $GO install github.com/rigingo/dop
 
+rm -rf $GOPATH/bin/${APP_NAME}
 unset GOBIN
 unset GIT_DIR
 $GO get ${SRC_PATH}/${APP_NAME}
 ##$GO install ${SRC_PATH}/${APP_NAME}
 ##CGO_ENABLED=0 $GO install -ldflags '-s -w' ${SRC_PATH}/${APP_NAME}
-CGO_ENABLED=0; export CGO_ENABLED
-$GO install -ldflags '-s -w' -a ${SRC_PATH}/${APP_NAME}
+##CGO_ENABLED=0 $GO install -ldflags '-s -w' -a ${SRC_PATH}/${APP_NAME}
+
+## see: https://github.com/golang/go/issues/9344#issuecomment-156317219
+## for explanation why "-a -installsuffix cgo" is needed to get a statically linked binary
+CGO_ENABLED=0 GOOS=linux $GO install -a -installsuffix cgo -ldflags '-s -w' ${SRC_PATH}/${APP_NAME}
 
 
 if [ $? -gt 0 ]; then
@@ -75,6 +93,11 @@ cp -p ${SOURCE}/*.sh        ${TARGET}/
 chmod +x ${TARGET}/*.sh
 
 mkdir -p ${TARGET}/bin
+
+## first we have to shutdown before copying the exe
+. ${TARGET}/conf/${APP_NAME}.env
+${TARGET}/stop.sh >> ${TARGET}/log/stop.log 2>&1 </dev/null
+
 ## this fails with
 ## cp: setting attribute ‘security.capability’ for ‘security.capability’: Operation not permitted
 ## cp --preserve=all $GOPATH/bin/${APP_NAME} ${TARGET}/bin/
@@ -82,8 +105,5 @@ mkdir -p ${TARGET}/bin
 cp -p $GOPATH/bin/${APP_NAME} ${TARGET}/bin/
 sudo setcap 'cap_net_bind_service=+ep' ${TARGET}/bin/${APP_NAME}
 
-. ${TARGET}/conf/${APP_NAME}.env
-${TARGET}/stop.sh >> ${TARGET}/log/stop.log 2>&1 </dev/null
 ${TARGET}/start.sh >> ${TARGET}/log/start.log 2>&1 </dev/null
-
 # ----------- DEPLOY END ----------- #
