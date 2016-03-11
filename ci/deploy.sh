@@ -87,9 +87,11 @@ sudo setcap 'cap_net_bind_service=+ep' $GOPATH/bin/${APP_NAME}
 
 # ----------- DEPLOY BEGIN ----------- #
 
-cp -pr ${SOURCE}/html     ${TARGET}/
-cp -pr ${SOURCE}/conf     ${TARGET}/
-cp -p ${SOURCE}/*.sh        ${TARGET}/
+cp -pr ${SOURCE}/html              ${TARGET}/
+cp -pr ${SOURCE}/conf              ${TARGET}/
+cp -p ${SOURCE}/*.sh               ${TARGET}/
+cp -p ${SOURCE}/ci/Dockerfile      ${TARGET}/
+cp -p ${SOURCE}/ci/.dockerignore   ${TARGET}/
 chmod +x ${TARGET}/*.sh
 
 mkdir -p ${TARGET}/bin
