@@ -87,6 +87,7 @@ sudo setcap 'cap_net_bind_service=+ep' $GOPATH/bin/${APP_NAME}
 
 # ----------- DEPLOY BEGIN ----------- #
 
+mkdir -p ${TARGET}/ci
 cp -pr ${SOURCE}/html              ${TARGET}/
 cp -pr ${SOURCE}/conf              ${TARGET}/
 cp -p ${SOURCE}/*.sh               ${TARGET}/
