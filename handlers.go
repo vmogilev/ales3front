@@ -100,11 +100,13 @@ func (c *appContext) headS3File(key string) (bool, string, *s3File) {
 }
 
 func (c *appContext) dispatchHandler(w http.ResponseWriter, r *http.Request) {
+	countThis("dispatchHandler", 1)
 	urlpath := r.URL.Path[0:]
 	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", c.bucket, urlpath)
 }
 
 func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
+	countThis("cdnHandler.hits", 1)
 	start := time.Now()
 	t := r.FormValue("t")
 	message := ""
@@ -114,6 +116,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	respTime("validateToken", time.Since(v))
 
 	if !ok {
+		countThis("cdnHandler.badtokens", 1)
 		message = fmt.Sprintf("Download Token: %s is invalid", t)
 	}
 

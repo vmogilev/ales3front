@@ -120,14 +120,29 @@ func main() {
 	}
 
 	// make sure we close Data Dog connection on exit
-	defer func() {
-		if c.ddEnabled {
-			c.simpleEvent("app", "stopping")
-			c.ddClient.Close()
+	defer func(pref string, app appContext) {
+		if app.ddEnabled {
+			app.simpleEvent(*ddPrefix+".ales3front", "stopping")
+			app.ddClient.Close()
 		}
-	}()
+	}(*ddPrefix, c)
 
-	c.simpleEvent("app", "starting")
+	/*
+		oschan := make(chan os.Signal, 1)
+		signal.Notify(oschan, os.Interrupt)
+		go func(pref string, app appContext) {
+			for range oschan {
+				defer func() {
+					if app.ddEnabled {
+						app.simpleEvent(*ddPrefix+".ales3front", "stopping / CTL-C")
+						app.ddClient.Close()
+					}
+					os.Exit(0)
+				}()
+			}
+		}(*ddPrefix, c)
+	*/
+	c.simpleEvent(*ddPrefix+".ales3front", "starting")
 	middleware := alice.New(logging, recovery)
 	http.Handle(*cdnPath, middleware.ThenFunc(c.cdnHandler))
 	http.Handle("/", middleware.ThenFunc(c.dispatchHandler))

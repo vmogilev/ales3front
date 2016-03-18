@@ -1,4 +1,4 @@
-FROM       scratch
+FROM       alpine:3.3
 MAINTAINER Vitaliy Mogilevskiy <mve@hashjoin.com>
 COPY       . /app/
 ENV        PORT 8080

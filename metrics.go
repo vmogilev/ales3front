@@ -7,7 +7,19 @@ import (
 )
 
 func respTime(what string, d time.Duration) {
-	c.gauge("app."+what+".response_time", float64(d/time.Millisecond), nil, 1)
+	c.gauge("ales3front."+what+".response_time_ms", float64(d/time.Millisecond), nil, 1)
+}
+
+func countThis(what string, cnt int64) {
+	c.count("ales3front."+what+".times_per_second", cnt, nil, 1)
+}
+
+func (c *appContext) simpleEvent(title, text string) {
+	if c.ddEnabled {
+		if err := c.ddClient.SimpleEvent(title, text); err != nil {
+			dogError(err)
+		}
+	}
 }
 
 func dogError(e error) {
@@ -55,12 +67,4 @@ func (c *appContext) timeInMilliseconds(name string, value float64, tags []strin
 		}
 	}
 
-}
-
-func (c *appContext) simpleEvent(title, text string) {
-	if c.ddEnabled {
-		if err := c.ddClient.SimpleEvent(title, text); err != nil {
-			dogError(err)
-		}
-	}
 }
