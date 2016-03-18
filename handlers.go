@@ -105,6 +105,7 @@ func (c *appContext) dispatchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	t := r.FormValue("t")
 	message := ""
 	ok := c.validateToken(t)
@@ -136,6 +137,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		Meta:      meta,
 	}
 	c.renderTemplate(w, "download", p)
+	c.gauge("app.cdnHandler.response_time", float64(time.Since(start)/time.Millisecond), nil, 1)
 	//fmt.Fprintf(w, "<h1>%s</h1><div>urlpath: %s</div><div>rawURL: %s</div><div>signedURL: %s</div>", c.cdn, urlpath, rawURL, signedURL)
 
 }
