@@ -21,4 +21,6 @@ nohup $TOP/bin/${APP} \
            -htmlPath=${htmlPath} \
            -debug=${debug} \
            -httpPort=${httpPort} \
-           -rootToken=${rootToken} >> ${LOG}/server.log 2>&1 </dev/null &
+           -rootToken=${rootToken} \
+           -ddAgent=localhost:8125 \
+           -ddPrefix=dev01 >> ${LOG}/server.log 2>&1 </dev/null &
