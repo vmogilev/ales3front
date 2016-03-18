@@ -27,7 +27,8 @@ func logging(next http.Handler) http.Handler {
 			r.Referer(),
 		)
 
-		c.gauge("app.response_time", float64(time.Since(start)/time.Millisecond), nil, 1)
+		//c.gauge("app.response_time", float64(time.Since(start)/time.Millisecond), nil, 1)
+		c.gauge("app.response_time", float64(time.Since(start)), nil, 1)
 	}
 
 	return http.HandlerFunc(fn)
