@@ -1,6 +1,14 @@
 package main
 
-import "github.com/vmogilev/dlog"
+import (
+	"time"
+
+	"github.com/vmogilev/dlog"
+)
+
+func respTime(what string, d time.Duration) {
+	c.gauge("app."+what+".response_time", float64(d/time.Millisecond), nil, 1)
+}
 
 func dogError(e error) {
 	dlog.Error.Printf("Failed to send metric to Data Dog: %s", e.Error())

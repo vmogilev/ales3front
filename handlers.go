@@ -108,7 +108,11 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	t := r.FormValue("t")
 	message := ""
+
+	v := time.Now()
 	ok := c.validateToken(t)
+	respTime("validateToken", time.Since(v))
+
 	if !ok {
 		message = fmt.Sprintf("Download Token: %s is invalid", t)
 	}
@@ -120,7 +124,9 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	meta := &s3File{}
 
 	if ok {
+		s := time.Now()
 		ok, message, meta = c.headS3File(urlpath)
+		respTime("headS3File", time.Since(s))
 	}
 
 	if ok {
@@ -137,7 +143,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		Meta:      meta,
 	}
 	c.renderTemplate(w, "download", p)
-	c.gauge("app.cdnHandler.response_time", float64(time.Since(start)/time.Millisecond), nil, 1)
+	respTime("cdnHandler", time.Since(start))
 	//fmt.Fprintf(w, "<h1>%s</h1><div>urlpath: %s</div><div>rawURL: %s</div><div>signedURL: %s</div>", c.cdn, urlpath, rawURL, signedURL)
 
 }
