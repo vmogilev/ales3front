@@ -24,7 +24,9 @@ DEV_TOP=${BASE_TOP}/dev; export DEV_TOP
 ##    tar -C /data/dev -xzf go1.6.linux-amd64.tar.gz
 ##
 ##GO=/usr/local/go/bin/go; export GO
-GO=${DEV_TOP}/go/bin/go; export GO
+GOROOT=${DEV_TOP}/go; export GOROOT
+GO=${GOROOT}/bin/go; export GO
+
 
 ## go [get|install] ${SRC_PATH}/${APP_NAME}
 SRC_PATH=bitbucket.org/alesi2; export SRC_PATH
