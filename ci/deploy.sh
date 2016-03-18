@@ -94,6 +94,7 @@ cp -pr ${SOURCE}/conf              ${TARGET}/
 cp -p ${SOURCE}/*.sh               ${TARGET}/
 cp -p ${SOURCE}/ci/Dockerfile      ${TARGET}/
 cp -p ${SOURCE}/ci/.dockerignore   ${TARGET}/
+cp -p ${SOURCE}/ci/make_docker.sh  ${TARGET}/
 chmod +x ${TARGET}/*.sh
 
 mkdir -p ${TARGET}/bin
