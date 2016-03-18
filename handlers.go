@@ -21,6 +21,7 @@ type s3File struct {
 	LastModified  time.Time
 }
 
+// Page is used in the template
 type Page struct {
 	Title     string
 	URLPath   string
@@ -50,10 +51,10 @@ func (c *appContext) signURL(rawURL string) (bool, string, string) {
 	signer := sign.NewURLSigner(c.keyID, c.privKey)
 	signedURL, err := signer.Sign(rawURL, time.Now().Add(time.Duration(c.expHours)*time.Hour))
 	if err != nil {
-		dlog.Error.Printf("Failed to sign url, err: %s\n", err.Error())
+		dlog.Error.Printf("Failed to sign url, err: %s", err.Error())
 		ok = false
 		if c.debug {
-			message = fmt.Sprintf("Failed to sign url, err: %s\n", err.Error())
+			message = fmt.Sprintf("Failed to sign url, err: %s", err.Error())
 		} else {
 			message = "Failed to sign url, please notify site administrator!"
 		}

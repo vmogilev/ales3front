@@ -9,22 +9,25 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/justinas/alice"
 	"github.com/vmogilev/dlog"
 )
 
 type appContext struct {
-	bucket   string
-	cred     string
-	region   string
-	cdn      string
-	host     string
-	keyID    string
-	privKey  *rsa.PrivateKey
-	expHours int
-	htmlPath string
-	debug    bool
-	root     string
+	bucket    string
+	cred      string
+	region    string
+	cdn       string
+	host      string
+	keyID     string
+	privKey   *rsa.PrivateKey
+	expHours  int
+	htmlPath  string
+	debug     bool
+	root      string
+	ddClient  *statsd.Client
+	ddEnabled bool
 }
 
 var c appContext
@@ -42,6 +45,8 @@ var (
 	httpPort   = flag.String("httpPort", "8080", "HTTP Port")
 	debug      = flag.Bool("debug", false, "Debug")
 	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download allowed")
+	ddAgent    = flag.String("ddAgent", "", "host:port of the Data Dog DogStatsD Agent, if null - no stats are sent")
+	ddPrefix   = flag.String("ddPrefix", "ales3front", "Data Dog namespace prefix (no dot) - added to all metrics")
 )
 
 func loadKey(f string) *rsa.PrivateKey {
@@ -69,6 +74,22 @@ func loadKey(f string) *rsa.PrivateKey {
 
 }
 
+// callDog sets up a connection to DataDog agent if agent is provided
+// and returns a pointer to it along with true which is then set at
+// application level so that each routine can eval if metrics are enabled
+func callDog(agent string, prefix string, tag string) (*statsd.Client, bool) {
+	if agent == "" {
+		return &statsd.Client{}, false
+	}
+	c, err := statsd.New(agent)
+	if err != nil {
+		dlog.Error.Panicf("Failed to dial Data Dog Agent on %s, %s:", agent, err)
+	}
+	c.Namespace = prefix + "."
+	c.Tags = append(c.Tags, tag)
+	return c, true
+}
+
 func main() {
 	flag.Parse()
 
@@ -80,20 +101,33 @@ func main() {
 		dlog.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	}
 
+	ddClient, ddEnabled := callDog(*ddAgent, *ddPrefix, *awsRegion)
+
 	c = appContext{
-		bucket:   *awsBucket,
-		cred:     *awsCred,
-		region:   *awsRegion,
-		cdn:      *cdnPath,
-		host:     *cdnHost,
-		keyID:    *cfKeyID,
-		privKey:  loadKey(*cfKeyFile),
-		expHours: *cfExpHours,
-		htmlPath: *htmlPath,
-		debug:    *debug,
-		root:     *rootToken,
+		bucket:    *awsBucket,
+		cred:      *awsCred,
+		region:    *awsRegion,
+		cdn:       *cdnPath,
+		host:      *cdnHost,
+		keyID:     *cfKeyID,
+		privKey:   loadKey(*cfKeyFile),
+		expHours:  *cfExpHours,
+		htmlPath:  *htmlPath,
+		debug:     *debug,
+		root:      *rootToken,
+		ddClient:  ddClient,
+		ddEnabled: ddEnabled,
 	}
 
+	// make sure we close Data Dog connection on exit
+	defer func() {
+		if c.ddEnabled {
+			c.simpleEvent("app", "stopping")
+			c.ddClient.Close()
+		}
+	}()
+
+	c.simpleEvent("app", "starting")
 	middleware := alice.New(logging, recovery)
 	http.Handle(*cdnPath, middleware.ThenFunc(c.cdnHandler))
 	http.Handle("/", middleware.ThenFunc(c.dispatchHandler))

@@ -2,6 +2,12 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/DataDog/datadog-go",
+			"repository": "https://github.com/DataDog/datadog-go",
+			"revision": "8b6f59aa4f252b3b547523c21381330138bfe3ac",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/aws/aws-sdk-go",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"revision": "1e97c3d4434349a4d680dd2cd99adc2cbc694349",

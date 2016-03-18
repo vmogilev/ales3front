@@ -11,6 +11,7 @@ fi
 
 BASE_TOP=/data; export BASE_TOP
 APP_TOP=${BASE_TOP}/app; export APP_TOP
+DEV_TOP=${BASE_TOP}/dev; export DEV_TOP
 
 ## we need a custom go install to do static linking
 ## because CGO_ENABLED=0 GOOS=linux -a
@@ -23,9 +24,7 @@ APP_TOP=${BASE_TOP}/app; export APP_TOP
 ##    tar -C /data/dev -xzf go1.6.linux-amd64.tar.gz
 ##
 ##GO=/usr/local/go/bin/go; export GO
-GO=/data/dev/go/bin/go; export GO
-GOROOT=${BASE_TOP}/dev/go; export GOROOT
-PATH=$PATH:$GOROOT/bin; export PATH
+GO=${DEV_TOP}/go/bin/go; export GO
 
 ## go [get|install] ${SRC_PATH}/${APP_NAME}
 SRC_PATH=bitbucket.org/alesi2; export SRC_PATH
@@ -44,7 +43,7 @@ SRC_NAME=alesi2; export SRC_NAME
 # ----------- EDIT END ----------- #
 
 GO15VENDOREXPERIMENT=1; export GO15VENDOREXPERIMENT
-GOPATH=${BASE_TOP}/dev/golang; export GOPATH
+GOPATH=${DEV_TOP}/golang; export GOPATH
 SOURCE=${GOPATH}/src/${SRC_PATH}/${APP_NAME}; export SOURCE
 TARGET=${APP_TOP}/${WWW_PATH}; export TARGET
 GIT_DIR=${BASE_TOP}/stage/git/${SRC_NAME}/${APP_NAME}.git; export GIT_DIR

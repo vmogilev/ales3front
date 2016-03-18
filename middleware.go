@@ -26,6 +26,8 @@ func logging(next http.Handler) http.Handler {
 			r.RequestURI,
 			r.Referer(),
 		)
+
+		c.gauge("app.response_time", float64(time.Since(start)/time.Millisecond), nil, 1)
 	}
 
 	return http.HandlerFunc(fn)
@@ -35,6 +37,7 @@ func recovery(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
+				c.simpleEvent("app", "panic")
 				dlog.Error.Printf("panic: %+v", err)
 				http.Error(w, http.StatusText(500), 500)
 			}
