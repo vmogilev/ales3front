@@ -6,8 +6,27 @@ import (
 	"github.com/vmogilev/dlog"
 )
 
-func respTime(what string, d time.Duration) {
-	c.gauge("ales3front."+what+".response_time_ms", float64(d/time.Millisecond), nil, 1)
+// respTime is initialized from a defer call at the start of the routine
+// that you need response time measured for example:
+//
+//    func (c *appContext) cdnHandler ...{
+//       defer respTime("cdnHandler")() // don't forget the extra parentheses
+//       ... lots of work ...
+//    }
+// it returns a closure function that is called at the end of the routine to calculate
+// response time (NOW-START time diff) and then send this to Data Dog
+//
+// see the following links for examples of this technique:
+//    1) http://www.gopl.io/ CHAPTER 5 Page# 146 / Chapter 5.8:
+//          https://github.com/adonovan/gopl.io/blob/master/ch5/trace/main.go
+//    2) Why add "()" after closure body in Golang?
+//          http://stackoverflow.com/questions/16008604/why-add-after-closure-body-in-golang
+func respTime(what string) func() {
+	start := time.Now()
+	return func() {
+		c.gauge("ales3front."+what+".response_time_ms", float64(time.Since(start)/time.Millisecond), nil, 1)
+	}
+	//c.gauge("ales3front."+what+".response_time_ms", float64(d/time.Millisecond), nil, 1)
 }
 
 func countThis(what string, cnt int64) {

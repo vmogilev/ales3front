@@ -33,6 +33,8 @@ type Page struct {
 }
 
 func (c *appContext) validateToken(t string) bool {
+	defer respTime("validateToken")() // don't forget the extra parentheses
+
 	if t == "" {
 		return false
 	}
@@ -63,6 +65,8 @@ func (c *appContext) signURL(rawURL string) (bool, string, string) {
 }
 
 func (c *appContext) headS3File(key string) (bool, string, *s3File) {
+	defer respTime("headS3File")() // don't forget the extra parentheses
+
 	sess := session.New(&aws.Config{
 		Region:      aws.String(c.region),
 		Credentials: credentials.NewSharedCredentials("", c.cred),
@@ -107,13 +111,12 @@ func (c *appContext) dispatchHandler(w http.ResponseWriter, r *http.Request) {
 
 func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	countThis("cdnHandler.hits", 1)
-	start := time.Now()
+	defer respTime("cdnHandler")() // don't forget the extra parentheses
+
 	t := r.FormValue("t")
 	message := ""
 
-	v := time.Now()
 	ok := c.validateToken(t)
-	respTime("validateToken", time.Since(v))
 
 	if !ok {
 		countThis("cdnHandler.badtokens", 1)
@@ -127,9 +130,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	meta := &s3File{}
 
 	if ok {
-		s := time.Now()
 		ok, message, meta = c.headS3File(urlpath)
-		respTime("headS3File", time.Since(s))
 	}
 
 	if ok {
@@ -146,7 +147,6 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		Meta:      meta,
 	}
 	c.renderTemplate(w, "download", p)
-	respTime("cdnHandler", time.Since(start))
 	//fmt.Fprintf(w, "<h1>%s</h1><div>urlpath: %s</div><div>rawURL: %s</div><div>signedURL: %s</div>", c.cdn, urlpath, rawURL, signedURL)
 
 }
