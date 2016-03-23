@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 	//"path"
 	"time"
 
@@ -62,6 +64,45 @@ func (c *appContext) signURL(rawURL string) (bool, string, string) {
 		}
 	}
 	return ok, message, signedURL
+}
+
+// findAndPickOne strips the S3 key's extension and searches S3
+// for up to 5 matches using stripped name as a prefix
+// this is to support AOS / Diversity Code changes where we have 5 files:
+//
+//     abc-v1.pdf
+//     abc-v2.pdf
+//     abc-v3.pdf
+//     abc-v4.pdf
+//     abc-v5.pdf
+//
+// and they all belong to the same root filename:
+//
+//     abc.pdf
+//
+// on the S3 size we store the root filename under Content-Disposition: filename="abc.pdf"
+// for each of the 5 files so that CDN handles the naming properly on the client side
+//
+// this is WIP -- it's not completed yet, this function should be called from headS3File
+func (c *appContext) findAndPickOne(key string, svc *s3.S3) (bool, string) {
+	defer respTime("findAndPickOne")() // don't forget the extra parentheses
+
+	root := strings.TrimSuffix(key, filepath.Ext(key))
+
+	params := &s3.ListObjectsInput{
+		Bucket:  aws.String(c.bucket), // Required
+		MaxKeys: aws.Int64(5),
+		Prefix:  aws.String(root),
+	}
+	resp, err := svc.ListObjects(params)
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error()) // still WIP - not completed yet
+		return                   // still WIP - not completed yet
+	}
+
 }
 
 func (c *appContext) headS3File(key string) (bool, string, *s3File) {
