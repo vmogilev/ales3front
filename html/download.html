@@ -7,7 +7,6 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
 
     <title>{{.Title}} | CDN Portal</title>
 
@@ -65,15 +64,10 @@ body {
       <div class="jumbotron">
         <h1>{{.Title}}</h1>
 
-                <!-- <div>SignedURL: {{.SignedURL}}</div> -->
 <table class="table table-bordered">
 <tr>
         <td class="active">Path</td>
-        <td class="success">{{.URLPath}}</td>
-</tr>
-<tr>
-        <td class="active">URL</td>
-        <td class="success">{{.RawURL}}</td>
+        <td class="success">{{.Meta.Key}}</td>
 </tr>
 <tr>
         <td class="active">Length</td>
@@ -108,7 +102,6 @@ body {
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
+    {{.Stats}}
   </body>
 </html>
-

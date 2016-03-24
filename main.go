@@ -15,19 +15,20 @@ import (
 )
 
 type appContext struct {
-	bucket    string
-	cred      string
-	region    string
-	cdn       string
-	host      string
-	keyID     string
-	privKey   *rsa.PrivateKey
-	expHours  int
-	htmlPath  string
-	debug     bool
-	root      string
-	ddClient  *statsd.Client
-	ddEnabled bool
+	bucket     string
+	cred       string
+	region     string
+	cdn        string
+	host       string
+	keyID      string
+	privKey    *rsa.PrivateKey
+	expHours   int
+	htmlPath   string
+	trace      bool
+	root       string
+	ddClient   *statsd.Client
+	ddEnabled  bool
+	maxDCfiles int64
 }
 
 var c appContext
@@ -43,10 +44,11 @@ var (
 	cfKeyFile  = flag.String("cfKeyFile", "", "CloudFront Signer Key File Location")
 	cfExpHours = flag.Int("cfExpHours", 1, "CloudFront Signed URL Expiration (in hours)")
 	httpPort   = flag.String("httpPort", "8080", "HTTP Port")
-	debug      = flag.Bool("debug", false, "Debug")
+	trace      = flag.Bool("trace", false, "Trace")
 	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download allowed")
 	ddAgent    = flag.String("ddAgent", "", "host:port of the Data Dog DogStatsD Agent, if null - no stats are sent")
 	ddPrefix   = flag.String("ddPrefix", "ales3front", "Data Dog namespace prefix (no dot) - added to all metrics")
+	maxDCfiles = flag.Int64("maxDCfiles", 5, "Maximum number of diversified download files to search for")
 )
 
 func loadKey(f string) *rsa.PrivateKey {
@@ -95,7 +97,7 @@ func main() {
 
 	// setup log output streams
 	// Trace, Info, Warning, Error
-	if *debug {
+	if *trace {
 		dlog.Init(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 	} else {
 		dlog.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
@@ -104,19 +106,20 @@ func main() {
 	ddClient, ddEnabled := callDog(*ddAgent, *ddPrefix, *awsRegion)
 
 	c = appContext{
-		bucket:    *awsBucket,
-		cred:      *awsCred,
-		region:    *awsRegion,
-		cdn:       *cdnPath,
-		host:      *cdnHost,
-		keyID:     *cfKeyID,
-		privKey:   loadKey(*cfKeyFile),
-		expHours:  *cfExpHours,
-		htmlPath:  *htmlPath,
-		debug:     *debug,
-		root:      *rootToken,
-		ddClient:  ddClient,
-		ddEnabled: ddEnabled,
+		bucket:     *awsBucket,
+		cred:       *awsCred,
+		region:     *awsRegion,
+		cdn:        *cdnPath,
+		host:       *cdnHost,
+		keyID:      *cfKeyID,
+		privKey:    loadKey(*cfKeyFile),
+		expHours:   *cfExpHours,
+		htmlPath:   *htmlPath,
+		trace:      *trace,
+		root:       *rootToken,
+		ddClient:   ddClient,
+		ddEnabled:  ddEnabled,
+		maxDCfiles: *maxDCfiles,
 	}
 
 	// make sure we close Data Dog connection on exit

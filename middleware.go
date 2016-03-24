@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"github.com/vmogilev/dlog"
@@ -36,7 +37,8 @@ func recovery(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				c.simpleEvent("app", "panic")
-				dlog.Error.Printf("panic: %+v", err)
+				//dlog.Error.Printf("panic: %+v", err)
+				dlog.Error.Printf("%s: %s", err, debug.Stack())
 				http.Error(w, http.StatusText(500), 500)
 			}
 		}()

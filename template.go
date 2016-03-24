@@ -17,7 +17,7 @@ func (c *appContext) renderTemplate(w http.ResponseWriter, tmpl string, p *Page)
 		dlog.Error.Printf("Failed to parse template, err: %s\n", err.Error())
 
 		var message string
-		if c.debug {
+		if c.trace {
 			message = err.Error()
 		} else {
 			message = "Failed to parse template: please notify server administrator"

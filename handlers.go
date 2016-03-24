@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"path/filepath"
 	"strings"
 	//"path"
+	"html/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,6 +20,8 @@ import (
 )
 
 type s3File struct {
+	Key           string
+	RealKey       string
 	ContentLength int64
 	ContentType   string
 	LastModified  time.Time
@@ -32,6 +36,7 @@ type Page struct {
 	OK        bool
 	Error     string
 	Meta      *s3File
+	Stats     template.HTML
 }
 
 func (c *appContext) validateToken(t string) bool {
@@ -48,7 +53,7 @@ func (c *appContext) validateToken(t string) bool {
 	return false
 }
 
-func (c *appContext) signURL(rawURL string) (bool, string, string) {
+func (c *appContext) signURL(rawURL string) (url string, mess string, succ bool) {
 	ok := true
 	message := ""
 
@@ -57,13 +62,13 @@ func (c *appContext) signURL(rawURL string) (bool, string, string) {
 	if err != nil {
 		dlog.Error.Printf("Failed to sign url, err: %s", err.Error())
 		ok = false
-		if c.debug {
+		if c.trace {
 			message = fmt.Sprintf("Failed to sign url, err: %s", err.Error())
 		} else {
 			message = "Failed to sign url, please notify site administrator!"
 		}
 	}
-	return ok, message, signedURL
+	return signedURL, message, ok
 }
 
 // findAndPickOne strips the S3 key's extension and searches S3
@@ -84,14 +89,14 @@ func (c *appContext) signURL(rawURL string) (bool, string, string) {
 // for each of the 5 files so that CDN handles the naming properly on the client side
 //
 // this is WIP -- it's not completed yet, this function should be called from headS3File
-func (c *appContext) findAndPickOne(key string, svc *s3.S3) (bool, string) {
+func (c *appContext) findAndPickOne(key string, svc *s3.S3) (string, bool) {
 	defer respTime("findAndPickOne")() // don't forget the extra parentheses
 
 	root := strings.TrimSuffix(key, filepath.Ext(key))
 
 	params := &s3.ListObjectsInput{
 		Bucket:  aws.String(c.bucket), // Required
-		MaxKeys: aws.Int64(5),
+		MaxKeys: aws.Int64(c.maxDCfiles),
 		Prefix:  aws.String(root),
 	}
 	resp, err := svc.ListObjects(params)
@@ -99,20 +104,31 @@ func (c *appContext) findAndPickOne(key string, svc *s3.S3) (bool, string) {
 	if err != nil {
 		// Print the error, cast err to awserr.Error to get the Code and
 		// Message from an error.
-		fmt.Println(err.Error()) // still WIP - not completed yet
-		return                   // still WIP - not completed yet
+		dlog.Error.Printf("error getting diversified files for: %s, %s", root, err)
+		return "", false
 	}
+
+	if len(resp.Contents) == 0 {
+		dlog.Error.Printf("found no diversified files for: %s", root)
+		return "", false
+	}
+
+	rand.Seed(time.Now().UTC().UnixNano())
+	k := resp.Contents[rand.Intn(len(resp.Contents))]
+	return *k.Key, true
 
 }
 
-func (c *appContext) headS3File(key string) (bool, string, *s3File) {
-	defer respTime("headS3File")() // don't forget the extra parentheses
-
+func (c *appContext) newS3Svc() *s3.S3 {
 	sess := session.New(&aws.Config{
 		Region:      aws.String(c.region),
 		Credentials: credentials.NewSharedCredentials("", c.cred),
 	})
-	svc := s3.New(sess)
+	return s3.New(sess)
+}
+
+func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3) (*s3File, string, bool) {
+	defer respTime("headS3File")() // don't forget the extra parentheses
 
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(c.bucket),
@@ -121,26 +137,38 @@ func (c *appContext) headS3File(key string) (bool, string, *s3File) {
 
 	resp, err := svc.HeadObject(params)
 	if err != nil {
+		dKey, ok := c.findAndPickOne(key, svc)
+		if ok {
+			return c.headS3File(dKey, key, svc)
+		}
 		dlog.Error.Printf("couldn't get head of file: %s, %s", key, err)
 		message := "File is not found!  Please check the URL"
-		if c.debug {
+		if c.trace {
 			message = fmt.Sprintf("File is not found! Error: %s", err)
 		}
-		return false, message, &s3File{}
+		return &s3File{Key: key}, message, false
+	}
+
+	var k string
+	k = key
+	if rootKey != "" {
+		k = "*" + rootKey
 	}
 
 	f := &s3File{
+		Key:           k,
+		RealKey:       key,
 		ContentLength: *resp.ContentLength,
 		ContentType:   *resp.ContentType,
 		LastModified:  *resp.LastModified,
 	}
 
-	if c.debug {
+	if c.trace {
 		dlog.Trace.Println(resp)
 		dlog.Trace.Println(f)
 	}
 
-	return true, "", f
+	return f, "", true
 
 }
 
@@ -164,19 +192,30 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		message = fmt.Sprintf("Download Token: %s is invalid", t)
 	}
 
-	//rawURL := path.Join(c.host, urlpath) // this strips :// to :/
 	urlpath := r.URL.Path[len(c.cdn):]
+	//rawURL := path.Join(c.host, urlpath) // this strips :// to :/
 	rawURL := c.host + urlpath
 	signedURL := "#"
 	meta := &s3File{}
 
 	if ok {
-		ok, message, meta = c.headS3File(urlpath)
+		meta, message, ok = c.headS3File(urlpath, "", c.newS3Svc())
 	}
 
 	if ok {
-		ok, message, signedURL = c.signURL(rawURL)
+		rawURL = c.host + meta.RealKey
+		signedURL, message, ok = c.signURL(rawURL)
 	}
+
+	tokens := []string{
+		"<!-- ",
+		"SignedURL: " + signedURL,
+		"URLPath: " + urlpath,
+		"RawURL: " + rawURL,
+		"-->",
+	}
+
+	stats := strings.Join(tokens, "\n")
 
 	p := &Page{
 		Title:     "Download",
@@ -186,6 +225,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		OK:        ok,
 		Error:     message,
 		Meta:      meta,
+		Stats:     template.HTML(stats),
 	}
 	c.renderTemplate(w, "download", p)
 	//fmt.Fprintf(w, "<h1>%s</h1><div>urlpath: %s</div><div>rawURL: %s</div><div>signedURL: %s</div>", c.cdn, urlpath, rawURL, signedURL)
