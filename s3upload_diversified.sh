@@ -12,7 +12,7 @@ usage() {
     exit 1
 }
 
-if [ -z "$FILE" ] || [ -z "$SDIR" ] || [ -z "$ROOT" ]; then
+if [ -z "$FILE" ] || [ -z "$SDIR" ] || [ -z "$ROOT" ] || [ -z "$BUCK" ]; then
     usage;
 fi
 
@@ -33,4 +33,3 @@ echo "
 aws s3api put-object --bucket ${BUCK} --key uploads/release/${SDIR}/${key} \
                      --body ${FILE} \
                      --content-disposition filename\=\"${ROOT}\"
-
