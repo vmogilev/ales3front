@@ -88,11 +88,13 @@ func (c *appContext) signURL(rawURL string) (url string, mess string, succ bool)
 // on the S3 size we store the root filename under Content-Disposition: filename="abc.pdf"
 // for each of the 5 files so that CDN handles the naming properly on the client side
 //
-// this is WIP -- it's not completed yet, this function should be called from headS3File
-func (c *appContext) findAndPickOne(key string, svc *s3.S3) (string, bool) {
-	defer respTime("findAndPickOne")() // don't forget the extra parentheses
+func (c *appContext) findAndPickOne(key string, svc *s3.S3, s *stack) (string, bool) {
+	me := "findAndPickOne"
+	defer respTime(me)() // don't forget the extra parentheses
+	s.Push(me, "<-")
 
 	root := strings.TrimSuffix(key, filepath.Ext(key))
+	s.Push(me, "root: "+root)
 
 	params := &s3.ListObjectsInput{
 		Bucket:  aws.String(c.bucket), // Required
@@ -104,17 +106,21 @@ func (c *appContext) findAndPickOne(key string, svc *s3.S3) (string, bool) {
 	if err != nil {
 		// Print the error, cast err to awserr.Error to get the Code and
 		// Message from an error.
+		s.Push(me, "S3 error getting diversified files")
 		dlog.Error.Printf("error getting diversified files for: %s, %s", root, err)
 		return "", false
 	}
 
 	if len(resp.Contents) == 0 {
+		s.Push(me, "resp.Contents=0")
 		dlog.Error.Printf("found no diversified files for: %s", root)
 		return "", false
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	k := resp.Contents[rand.Intn(len(resp.Contents))]
+	s.Push(me, "result: "+*k.Key)
+	s.Push(me, "->")
 	return *k.Key, true
 
 }
@@ -127,8 +133,10 @@ func (c *appContext) newS3Svc() *s3.S3 {
 	return s3.New(sess)
 }
 
-func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3) (*s3File, string, bool) {
-	defer respTime("headS3File")() // don't forget the extra parentheses
+func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *stack) (*s3File, string, bool) {
+	me := "headS3File"
+	defer respTime(me)() // don't forget the extra parentheses
+	s.Push(me, "<-")
 
 	params := &s3.HeadObjectInput{
 		Bucket: aws.String(c.bucket),
@@ -137,10 +145,13 @@ func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3) (*s3File
 
 	resp, err := svc.HeadObject(params)
 	if err != nil {
-		dKey, ok := c.findAndPickOne(key, svc)
+		s.Push(me, "key not found on S3, checking for diversified files")
+		dKey, ok := c.findAndPickOne(key, svc, s)
 		if ok {
-			return c.headS3File(dKey, key, svc)
+			s.Push(me, "diversified found, doing recursion")
+			return c.headS3File(dKey, key, svc, s)
 		}
+		s.Push(me, "no diversified files found either")
 		dlog.Error.Printf("couldn't get head of file: %s, %s", key, err)
 		message := "File is not found!  Please check the URL"
 		if c.trace {
@@ -152,6 +163,7 @@ func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3) (*s3File
 	var k string
 	k = key
 	if rootKey != "" {
+		s.Push(me, "adding diversified marker to key")
 		k = "*" + rootKey
 	}
 
@@ -179,8 +191,11 @@ func (c *appContext) dispatchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
-	countThis("cdnHandler.hits", 1)
-	defer respTime("cdnHandler")() // don't forget the extra parentheses
+	me := "cdnHandler"
+	countThis(me+".hits", 1)
+	defer respTime(me)() // don't forget the extra parentheses
+	s := make(stack, 0)
+	s.Push(me, "<-")
 
 	t := r.FormValue("t")
 	message := ""
@@ -188,8 +203,9 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	ok := c.validateToken(t)
 
 	if !ok {
-		countThis("cdnHandler.badtokens", 1)
+		countThis(me+".badtokens", 1)
 		message = fmt.Sprintf("Download Token: %s is invalid", t)
+		s.Push(me, "invalid token")
 	}
 
 	urlpath := r.URL.Path[len(c.cdn):]
@@ -199,21 +215,23 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	meta := &s3File{}
 
 	if ok {
-		meta, message, ok = c.headS3File(urlpath, "", c.newS3Svc())
+		s.Push(me, "calling headS3File")
+		meta, message, ok = c.headS3File(urlpath, "", c.newS3Svc(), &s)
 	}
 
 	if ok {
 		rawURL = c.host + meta.RealKey
+		s.Push(me, "calling signURL")
 		signedURL, message, ok = c.signURL(rawURL)
 	}
 
 	tokens := []string{
 		"<!-- ",
-		"SignedURL: " + signedURL,
 		"URLPath: " + urlpath,
 		"RawURL: " + rawURL,
-		"-->",
 	}
+	tokens = append(tokens, s...)
+	tokens = append(tokens, "-->")
 
 	stats := strings.Join(tokens, "\n")
 
