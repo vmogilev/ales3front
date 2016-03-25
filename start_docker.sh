@@ -20,7 +20,7 @@ docker run -d --publish 80:8080 \
            639518868771.dkr.ecr.us-east-1.amazonaws.com/alesi2/ales3front:dev \
            -cfKeyFile=/root/.ssh/pk-APKAIOYPWYODYKDZBPQA.pem \
            -cfKeyID=APKAIOYPWYODYKDZBPQA \
-           -debug=true \
+           -trace=true \
            -htmlPath=/app/html \
            -ddAgent=dd-agent:8125 \
            -ddPrefix=devdoc

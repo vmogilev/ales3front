@@ -26,7 +26,7 @@ nohup $TOP/bin/${APP} \
            -cdnHost=${cdnHost} \
            -cfExpHours=${cfExpHours} \
            -htmlPath=${htmlPath} \
-           -debug=${debug} \
+           -trace=${debug} \
            -httpPort=${httpPort} \
            -rootToken=${rootToken} \
            -ddAgent=localhost:8125 \
