@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func (c *appContext) authDo(ctx context.Context, t string, s *stack) (bool, error) {
+func (c *appContext) authDo(ctx context.Context, t string, s *Stack) (bool, error) {
 	me := "authDo"
 	defer respTime(me)() // don't forget the extra parentheses
 	s.Push(me, "<-")

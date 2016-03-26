@@ -41,7 +41,7 @@ type Page struct {
 	Stats     template.HTML
 }
 
-func (c *appContext) validateToken(ctx context.Context, t string, s *stack) (bool, error) {
+func (c *appContext) validateToken(ctx context.Context, t string, s *Stack) (bool, error) {
 	me := "validateToken"
 	defer respTime(me)() // don't forget the extra parentheses
 	s.Push(me, "<-")
@@ -92,7 +92,7 @@ func (c *appContext) signURL(rawURL string) (url string, mess string, succ bool)
 // on the S3 size we store the root filename under Content-Disposition: filename="abc.pdf"
 // for each of the 5 files so that CDN handles the naming properly on the client side
 //
-func (c *appContext) findAndPickOne(key string, svc *s3.S3, s *stack) (string, bool) {
+func (c *appContext) findAndPickOne(key string, svc *s3.S3, s *Stack) (string, bool) {
 	me := "findAndPickOne"
 	defer respTime(me)() // don't forget the extra parentheses
 	s.Push(me, "<-")
@@ -137,7 +137,7 @@ func (c *appContext) newS3Svc() *s3.S3 {
 	return s3.New(sess)
 }
 
-func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *stack) (*s3File, string, bool) {
+func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *Stack) (*s3File, string, bool) {
 	me := "headS3File"
 	defer respTime(me)() // don't forget the extra parentheses
 	s.Push(me, "<-")
@@ -198,7 +198,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	me := "cdnHandler"
 	countThis(me+".hits", 1)
 	defer respTime(me)() // don't forget the extra parentheses
-	s := make(stack, 0)
+	s := NewStack()
 	s.Push(me, "<-")
 
 	t := r.FormValue("t")
@@ -207,7 +207,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.authTimeout)*time.Millisecond)
 	defer cancel() // Cancel ctx as soon as cdnHandler returns
 
-	ok, err := c.validateToken(ctx, t, &s)
+	ok, err := c.validateToken(ctx, t, s)
 	if !ok {
 		countThis(me+".badtokens", 1)
 		s.Push(me, err.Error())
@@ -222,7 +222,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 
 	if ok {
 		s.Push(me, "calling headS3File")
-		meta, message, ok = c.headS3File(urlpath, "", c.newS3Svc(), &s)
+		meta, message, ok = c.headS3File(urlpath, "", c.newS3Svc(), s)
 	}
 
 	if ok {
@@ -236,7 +236,7 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		"URLPath: " + urlpath,
 		"RawURL: " + rawURL,
 	}
-	tokens = append(tokens, s...)
+	tokens = append(tokens, *s...)
 	tokens = append(tokens, "-->")
 
 	stats := strings.Join(tokens, "\n")
