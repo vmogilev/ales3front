@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudfront/sign"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"golang.org/x/net/context"
 	//"github.com/nu7hatch/gouuid"
 	"github.com/vmogilev/dlog"
 )
@@ -39,18 +41,20 @@ type Page struct {
 	Stats     template.HTML
 }
 
-func (c *appContext) validateToken(t string) bool {
-	defer respTime("validateToken")() // don't forget the extra parentheses
+func (c *appContext) validateToken(ctx context.Context, t string, s *stack) (bool, error) {
+	me := "validateToken"
+	defer respTime(me)() // don't forget the extra parentheses
+	s.Push(me, "<-")
 
 	if t == "" {
-		return false
+		return false, errors.New("authentication token is missing")
 	}
 
 	if t == c.root {
-		return true
+		return true, nil
 	}
 
-	return false
+	return c.authDo(ctx, t, s)
 }
 
 func (c *appContext) signURL(rawURL string) (url string, mess string, succ bool) {
@@ -200,12 +204,14 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	t := r.FormValue("t")
 	message := ""
 
-	ok := c.validateToken(t)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.authTimeout)*time.Millisecond)
+	defer cancel() // Cancel ctx as soon as cdnHandler returns
 
+	ok, err := c.validateToken(ctx, t, &s)
 	if !ok {
 		countThis(me+".badtokens", 1)
-		message = fmt.Sprintf("Download Token: %s is invalid", t)
-		s.Push(me, "invalid token")
+		s.Push(me, err.Error())
+		message = fmt.Sprintf("Download Token: %s can't be validated: %s", t, err)
 	}
 
 	urlpath := r.URL.Path[len(c.cdn):]

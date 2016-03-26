@@ -15,40 +15,44 @@ import (
 )
 
 type appContext struct {
-	bucket     string
-	cred       string
-	region     string
-	cdn        string
-	host       string
-	keyID      string
-	privKey    *rsa.PrivateKey
-	expHours   int
-	htmlPath   string
-	trace      bool
-	root       string
-	ddClient   *statsd.Client
-	ddEnabled  bool
-	maxDCfiles int64
+	bucket       string
+	cred         string
+	region       string
+	cdn          string
+	host         string
+	keyID        string
+	privKey      *rsa.PrivateKey
+	expHours     int
+	htmlPath     string
+	trace        bool
+	root         string
+	ddClient     *statsd.Client
+	ddEnabled    bool
+	maxDCfiles   int64
+	authTimeout  int64
+	authEndPoint string
 }
 
 var c appContext
 
 var (
-	awsBucket  = flag.String("awsBucket", "support-pub-dev", "aws bucket name")
-	awsCred    = flag.String("awsCred", "ale-s3app", "aws credentials profile from ~/.aws/credentials")
-	awsRegion  = flag.String("awsRegion", "us-east-1", "aws region")
-	htmlPath   = flag.String("htmlPath", "./html", "absolute or relative path to html templates")
-	cdnPath    = flag.String("cdnPath", "/cdn/", "URL path prefix to pass to CDN")
-	cdnHost    = flag.String("cdnHost", "http://cdn-dev.alcalcs.com/", "CloudFront CDN Hostname and http|https prefix")
-	cfKeyID    = flag.String("cfKeyID", "", "CloudFront Signer Key ID")
-	cfKeyFile  = flag.String("cfKeyFile", "", "CloudFront Signer Key File Location")
-	cfExpHours = flag.Int("cfExpHours", 1, "CloudFront Signed URL Expiration (in hours)")
-	httpPort   = flag.String("httpPort", "8080", "HTTP Port")
-	trace      = flag.Bool("trace", false, "Trace")
-	rootToken  = flag.String("rootToken", "gTxHrJ", "With this token any download allowed")
-	ddAgent    = flag.String("ddAgent", "", "host:port of the Data Dog DogStatsD Agent, if null - no stats are sent")
-	ddPrefix   = flag.String("ddPrefix", "ales3front", "Data Dog namespace prefix (no dot) - added to all metrics")
-	maxDCfiles = flag.Int64("maxDCfiles", 5, "Maximum number of diversified download files to search for")
+	awsBucket    = flag.String("awsBucket", "support-pub-dev", "aws bucket name")
+	awsCred      = flag.String("awsCred", "ale-s3app", "aws credentials profile from ~/.aws/credentials")
+	awsRegion    = flag.String("awsRegion", "us-east-1", "aws region")
+	htmlPath     = flag.String("htmlPath", "./html", "absolute or relative path to html templates")
+	cdnPath      = flag.String("cdnPath", "/cdn/", "URL path prefix to pass to CDN")
+	cdnHost      = flag.String("cdnHost", "http://cdn-dev.alcalcs.com/", "CloudFront CDN Hostname and http|https prefix")
+	cfKeyID      = flag.String("cfKeyID", "", "CloudFront Signer Key ID")
+	cfKeyFile    = flag.String("cfKeyFile", "", "CloudFront Signer Key File Location")
+	cfExpHours   = flag.Int("cfExpHours", 1, "CloudFront Signed URL Expiration (in hours)")
+	httpPort     = flag.String("httpPort", "8080", "HTTP Port")
+	trace        = flag.Bool("trace", false, "Trace")
+	rootToken    = flag.String("rootToken", "gTxHrJ", "With this token any download allowed")
+	ddAgent      = flag.String("ddAgent", "", "host:port of the Data Dog DogStatsD Agent, if null - no stats are sent")
+	ddPrefix     = flag.String("ddPrefix", "ales3front", "Data Dog namespace prefix (no dot) - added to all metrics")
+	maxDCfiles   = flag.Int64("maxDCfiles", 5, "Maximum number of diversified download files to search for")
+	authTimeout  = flag.Int64("authTimeout", 600, "Auth token validation timeout in Milliseconds")
+	authEndPoint = flag.String("authEndPoint", "", "Auth callback end point at Calabasas; EX: https://support.esd.alcatel-lucent.com/pm/cdlv?t=")
 )
 
 func loadKey(f string) *rsa.PrivateKey {
@@ -106,20 +110,22 @@ func main() {
 	ddClient, ddEnabled := callDog(*ddAgent, *ddPrefix, *awsRegion)
 
 	c = appContext{
-		bucket:     *awsBucket,
-		cred:       *awsCred,
-		region:     *awsRegion,
-		cdn:        *cdnPath,
-		host:       *cdnHost,
-		keyID:      *cfKeyID,
-		privKey:    loadKey(*cfKeyFile),
-		expHours:   *cfExpHours,
-		htmlPath:   *htmlPath,
-		trace:      *trace,
-		root:       *rootToken,
-		ddClient:   ddClient,
-		ddEnabled:  ddEnabled,
-		maxDCfiles: *maxDCfiles,
+		bucket:       *awsBucket,
+		cred:         *awsCred,
+		region:       *awsRegion,
+		cdn:          *cdnPath,
+		host:         *cdnHost,
+		keyID:        *cfKeyID,
+		privKey:      loadKey(*cfKeyFile),
+		expHours:     *cfExpHours,
+		htmlPath:     *htmlPath,
+		trace:        *trace,
+		root:         *rootToken,
+		ddClient:     ddClient,
+		ddEnabled:    ddEnabled,
+		maxDCfiles:   *maxDCfiles,
+		authTimeout:  *authTimeout,
+		authEndPoint: *authEndPoint,
 	}
 
 	// make sure we close Data Dog connection on exit
