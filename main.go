@@ -155,6 +155,6 @@ func main() {
 	middleware := alice.New(logging, recovery)
 	http.Handle(*cdnPath, middleware.ThenFunc(c.cdnHandler))
 	http.Handle("/", middleware.ThenFunc(c.dispatchHandler))
-	dlog.Info.Fatal(http.ListenAndServe(":"+*httpPort, nil))
+	dlog.Error.Fatal(http.ListenAndServe(":"+*httpPort, nil))
 
 }

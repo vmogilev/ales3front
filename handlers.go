@@ -209,7 +209,19 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 
 	ok, err := c.validateToken(ctx, t, s)
 	if !ok {
-		countThis(me+".badtokens", 1)
+		if strings.HasPrefix(err.Error(), "context deadline") {
+			dlog.Error.Printf("timeout_token")
+			countThis(me+".auth.timeout_tokens", 1)
+		} else if strings.HasSuffix(err.Error(), "NO") {
+			dlog.Error.Printf("no_token")
+			countThis(me+".auth.no_tokens", 1)
+		} else if strings.HasSuffix(err.Error(), "ERROR") {
+			dlog.Error.Printf("error_token")
+			countThis(me+".auth.error_tokens", 1)
+		} else {
+			dlog.Error.Printf("bad_token")
+			countThis(me+".auth.bad_tokens", 1)
+		}
 		s.Push(me, err.Error())
 		message = fmt.Sprintf("Download Token: %s can't be validated: %s", t, err)
 	}
@@ -231,15 +243,15 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 		signedURL, message, ok = c.signURL(rawURL)
 	}
 
-	tokens := []string{
+	trc := []string{
 		"<!-- ",
 		"URLPath: " + urlpath,
 		"RawURL: " + rawURL,
 	}
-	tokens = append(tokens, *s...)
-	tokens = append(tokens, "-->")
+	trc = append(trc, *s...)
+	trc = append(trc, "-->")
 
-	stats := strings.Join(tokens, "\n")
+	stats := strings.Join(trc, "\n")
 
 	p := &Page{
 		Title:     "Download",
