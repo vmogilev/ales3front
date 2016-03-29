@@ -112,7 +112,7 @@ func main() {
 	ddClient, ddEnabled := callDog(*ddAgent, *ddPrefix, *awsRegion)
 
 	//tr := &http.Transport{DisableKeepAlives: true}
-	tr := &http.Transport{}
+	tr := &http.Transport{MaxIdleConnsPerHost: 10}
 	defer tr.CloseIdleConnections()
 	httpClient := &http.Client{Transport: tr}
 
