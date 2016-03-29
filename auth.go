@@ -17,9 +17,9 @@ func (c *appContext) authDo(ctx context.Context, t string, s *Stack) (bool, erro
 	defer respTime(me)() // don't forget the extra parentheses
 	s.Push(me, "<-")
 
-	tr := &http.Transport{}
-	defer tr.CloseIdleConnections()
-	hc := &http.Client{Transport: tr}
+	// tr := &http.Transport{}
+	// defer tr.CloseIdleConnections()
+	// hc := &http.Client{Transport: tr}
 
 	et := url.QueryEscape(t)
 	s.Push(me, "token raw: "+t)
@@ -33,7 +33,8 @@ func (c *appContext) authDo(ctx context.Context, t string, s *Stack) (bool, erro
 		return false, hcErr
 	}
 
-	res, doErr := ctxhttp.Do(ctx, hc, req)
+	// res, doErr := ctxhttp.Do(ctx, hc, req)
+	res, doErr := ctxhttp.Do(ctx, c.httpClient, req)
 	if doErr != nil {
 		s.Push(me, "failed calling ctxhttp.Do")
 		dlog.Error.Printf("failed calling ctxhttp.Do: %s", doErr)

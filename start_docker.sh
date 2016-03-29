@@ -23,6 +23,9 @@ docker run -d --publish 80:8080 \
            -trace=true \
            -htmlPath=/app/html \
            -ddAgent=dd-agent:8125 \
-           -ddPrefix=devdoc
+           -ddPrefix=devdoc \
+           -authTimeout=2000 \
+           -authEndPoint="https://support.esd.alcatel-lucent.com/pm_tmp/cdlv?t="
+
 
 docker ps -a

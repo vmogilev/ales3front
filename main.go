@@ -31,6 +31,7 @@ type appContext struct {
 	maxDCfiles   int64
 	authTimeout  int64
 	authEndPoint string
+	httpClient   *http.Client
 }
 
 var c appContext
@@ -109,6 +110,10 @@ func main() {
 
 	ddClient, ddEnabled := callDog(*ddAgent, *ddPrefix, *awsRegion)
 
+	tr := &http.Transport{}
+	defer tr.CloseIdleConnections()
+	httpClient := &http.Client{Transport: tr}
+
 	c = appContext{
 		bucket:       *awsBucket,
 		cred:         *awsCred,
@@ -126,6 +131,7 @@ func main() {
 		maxDCfiles:   *maxDCfiles,
 		authTimeout:  *authTimeout,
 		authEndPoint: *authEndPoint,
+		httpClient:   httpClient,
 	}
 
 	// make sure we close Data Dog connection on exit
