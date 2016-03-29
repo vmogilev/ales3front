@@ -15,23 +15,24 @@ import (
 )
 
 type appContext struct {
-	bucket       string
-	cred         string
-	region       string
-	cdn          string
-	host         string
-	keyID        string
-	privKey      *rsa.PrivateKey
-	expHours     int
-	htmlPath     string
-	trace        bool
-	root         string
-	ddClient     *statsd.Client
-	ddEnabled    bool
-	maxDCfiles   int64
-	authTimeout  int64
-	authEndPoint string
-	httpClient   *http.Client
+	bucket        string
+	cred          string
+	region        string
+	cdn           string
+	host          string
+	keyID         string
+	privKey       *rsa.PrivateKey
+	expHours      int
+	htmlPath      string
+	trace         bool
+	root          string
+	ddClient      *statsd.Client
+	ddEnabled     bool
+	maxDCfiles    int64
+	authTimeout   int64
+	authEndPoint  string
+	httpTransport *http.Transport
+	httpClient    *http.Client
 }
 
 var c appContext
@@ -115,23 +116,24 @@ func main() {
 	httpClient := &http.Client{Transport: tr}
 
 	c = appContext{
-		bucket:       *awsBucket,
-		cred:         *awsCred,
-		region:       *awsRegion,
-		cdn:          *cdnPath,
-		host:         *cdnHost,
-		keyID:        *cfKeyID,
-		privKey:      loadKey(*cfKeyFile),
-		expHours:     *cfExpHours,
-		htmlPath:     *htmlPath,
-		trace:        *trace,
-		root:         *rootToken,
-		ddClient:     ddClient,
-		ddEnabled:    ddEnabled,
-		maxDCfiles:   *maxDCfiles,
-		authTimeout:  *authTimeout,
-		authEndPoint: *authEndPoint,
-		httpClient:   httpClient,
+		bucket:        *awsBucket,
+		cred:          *awsCred,
+		region:        *awsRegion,
+		cdn:           *cdnPath,
+		host:          *cdnHost,
+		keyID:         *cfKeyID,
+		privKey:       loadKey(*cfKeyFile),
+		expHours:      *cfExpHours,
+		htmlPath:      *htmlPath,
+		trace:         *trace,
+		root:          *rootToken,
+		ddClient:      ddClient,
+		ddEnabled:     ddEnabled,
+		maxDCfiles:    *maxDCfiles,
+		authTimeout:   *authTimeout,
+		authEndPoint:  *authEndPoint,
+		httpTransport: tr,
+		httpClient:    httpClient,
 	}
 
 	// make sure we close Data Dog connection on exit

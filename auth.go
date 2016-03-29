@@ -20,6 +20,7 @@ func (c *appContext) authDo(ctx context.Context, t string, s *Stack) (bool, erro
 	// tr := &http.Transport{}
 	// defer tr.CloseIdleConnections()
 	// hc := &http.Client{Transport: tr}
+	defer c.httpTransport.CloseIdleConnections()
 
 	et := url.QueryEscape(t)
 	s.Push(me, "token raw: "+t)
