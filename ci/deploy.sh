@@ -110,5 +110,7 @@ ${TARGET}/stop.sh >> ${TARGET}/log/stop.log 2>&1 </dev/null
 cp -p $GOPATH/bin/${APP_NAME} ${TARGET}/bin/
 sudo setcap 'cap_net_bind_service=+ep' ${TARGET}/bin/${APP_NAME}
 
-${TARGET}/start.sh >> ${TARGET}/log/start.log 2>&1 </dev/null
+##${TARGET}/start.sh >> ${TARGET}/log/start.log 2>&1 </dev/null
+${TARGET}/make_docker.sh
+${TARGET}/start_docker.sh
 # ----------- DEPLOY END ----------- #

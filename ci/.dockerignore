@@ -1,6 +1,8 @@
 start.sh
 stop.sh
 start_docker.sh
+make_docker.sh
+s3upload_diversified.sh
 log
 conf
 Dockerfile
