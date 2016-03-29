@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/vmogilev/dlog"
 
@@ -51,6 +53,13 @@ func (c *appContext) authDo(ctx context.Context, t string, s *Stack) (bool, erro
 	}
 
 	ar := string(b)
+	if res.StatusCode != http.StatusOK {
+		s.Push(me, "HTTP Error: "+strconv.Itoa(res.StatusCode))
+		s.Push(me, ar[:strings.Index(ar, "<!DOCTYPE html")])
+		s.Push(me, "Err ->")
+		return false, fmt.Errorf("Token validation failed due to HTTP error: %d", res.StatusCode)
+	}
+
 	if ar == "YES" {
 		s.Push(me, "Ok ->")
 		return true, nil
