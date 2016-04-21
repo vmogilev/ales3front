@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Alcatel-Lucent Calabasas CDN Portal">
+    <meta name="author" content="hashjoin.com">
 
     <title>{{.Title}} | CDN Portal</title>
 
@@ -70,17 +70,17 @@ body {
         <td class="success">{{.Meta.Key}}</td>
 </tr>
 <tr>
-        <td class="active">Length</td>
+        <td class="active">Size</td>
         <td class="success">{{.Meta.ContentLength}}</td>
 </tr>
 <tr>
         <td class="active">Type</td>
         <td class="success">{{.Meta.ContentType}}</td>
 </tr>
-<tr>
+<!-- <tr>
         <td class="active">Modified</td>
         <td class="success">{{.Meta.LastModified}}</td>
-</tr>
+</tr> -->
 </table>
 
     {{if .OK}}
