@@ -149,13 +149,17 @@ func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *Stack
 
 	resp, err := svc.HeadObject(params)
 	if err != nil {
-		s.Push(me, "key not found on S3, checking for diversified files")
-		dKey, ok := c.findAndPickOne(key, svc, s)
-		if ok {
-			s.Push(me, "diversified found, doing recursion")
-			return c.headS3File(dKey, key, svc, s)
-		}
-		s.Push(me, "no diversified files found either")
+		// VM: Mon: February 13 2017
+		// no longer doing diversified files as per ALU-44
+		// --------------- old diversified code BEGIN ----------------
+		// s.Push(me, "key not found on S3, checking for diversified files")
+		// dKey, ok := c.findAndPickOne(key, svc, s)
+		// if ok {
+		// 	s.Push(me, "diversified found, doing recursion")
+		// 	return c.headS3File(dKey, key, svc, s)
+		// }
+		// s.Push(me, "no diversified files found either")
+		// --------------- old diversified code END ----------------
 		dlog.Error.Printf("couldn't get head of file: %s, %s", key, err)
 		message := "File is not found!  Please check the URL"
 		if c.trace {
