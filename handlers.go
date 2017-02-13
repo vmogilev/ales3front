@@ -160,7 +160,9 @@ func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *Stack
 		// }
 		// s.Push(me, "no diversified files found either")
 		// --------------- old diversified code END ----------------
-		dlog.Error.Printf("couldn't get head of file: %s, %s", key, err)
+		m := fmt.Sprintf("couldn't get head of file: %s, %s", key, err)
+		dlog.Error.Printf(m)
+		s.Push(me, m)
 		message := "File is not found!  Please check the URL"
 		if c.trace {
 			message = fmt.Sprintf("File is not found! Error: %s", err)
