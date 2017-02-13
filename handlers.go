@@ -167,6 +167,7 @@ func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *Stack
 		if c.trace {
 			message = fmt.Sprintf("File is not found! Error: %s", err)
 		}
+		s.Push(me, "Fail ->")
 		return &s3File{Key: key}, message, false
 	}
 
@@ -190,6 +191,7 @@ func (c *appContext) headS3File(key string, rootKey string, svc *s3.S3, s *Stack
 		dlog.Trace.Println(f)
 	}
 
+	s.Push(me, "Ok ->")
 	return f, "", true
 
 }
