@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	//"path"
 	"html/template"
@@ -210,9 +211,22 @@ func (c *appContext) cdnHandler(w http.ResponseWriter, r *http.Request) {
 	s.Push(me, "<-")
 
 	t := r.FormValue("t")
+
+	authTimeout := c.authTimeout
+	o := r.FormValue("o")
+	if o != "" {
+		s.Push(me, fmt.Sprintf("authTimeout provided via URL as: %s", o))
+		i, err := strconv.ParseInt(o, 10, 64)
+		if err == nil {
+			s.Push(me, fmt.Sprintf("authTimeout parsed as: %d", i))
+			authTimeout = i
+		} else {
+			s.Push(me, fmt.Sprintf("authTimeout failed to parse"))
+		}
+	}
 	message := ""
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.authTimeout)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(authTimeout)*time.Millisecond)
 	defer cancel() // Cancel ctx as soon as cdnHandler returns
 
 	ok, err := c.validateToken(ctx, t, s)
